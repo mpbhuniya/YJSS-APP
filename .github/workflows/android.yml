@@ -1,0 +1,48 @@
+
+name: Build Yuva Jan Seva Samiti APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Extract project ZIP
+        run: |
+          mkdir project
+          unzip -q "$(find . -maxdepth 1 -name '*.zip' | head -n 1)" -d project
+
+      - name: Build APK
+        run: |
+          cd project
+          BUILD_FILE=$(find . -name settings.gradle -o -name settings.gradle.kts | head -n 1)
+          if [ -n "$BUILD_FILE" ]; then
+            cd "$(dirname "$BUILD_FILE")"
+          fi
+          gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: YJSS-APP-APK
+          path: project/**/build/outputs/apk/debug/*.apk
+          
